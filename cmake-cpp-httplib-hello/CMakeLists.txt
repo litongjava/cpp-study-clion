@@ -1,9 +1,6 @@
+# 指定 vcpkg 的工具链文件（如果您没有在 CLion 设置中指定的话）
 cmake_minimum_required(VERSION 3.23)
 project(cmake_cpp_httplib_hello)
-
-# 指定 vcpkg 的工具链文件（如果您没有在 CLion 设置中指定的话）
-# set(CMAKE_TOOLCHAIN_FILE "D:/vcpkg/scripts/buildsystems/vcpkg.cmake")
-
 set(CMAKE_CXX_STANDARD 14)
 
 # 查找 cpp-httplib 包
