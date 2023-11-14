@@ -8,9 +8,13 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+//#include <jsoncpp/json/json.h>
+//#include <jsoncpp/json/value.h>
+//#include <jsoncpp/json/reader.h>
+
+#include <json/json.h>
+#include <json/value.h>
+#include <json/reader.h>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
