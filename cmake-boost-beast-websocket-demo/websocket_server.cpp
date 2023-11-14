@@ -35,7 +35,6 @@ void do_session(tcp::socket &socket) {
 int main() {
   try {
     net::io_context ioc{1};
-
     tcp::acceptor acceptor{ioc, {net::ip::make_address("0.0.0.0"), 8080}};
     for (;;) {
       tcp::socket socket{ioc};
