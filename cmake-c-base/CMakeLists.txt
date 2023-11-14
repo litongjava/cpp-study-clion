@@ -12,5 +12,5 @@ file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 # 生成可执行文件
 foreach(file ${SRC_FILES})
     get_filename_component(name ${file} NAME)
-    add_executable(${name} ${file})
+    add_executable(${name} ${file} src/for_int_plusplus.c)
 endforeach()
