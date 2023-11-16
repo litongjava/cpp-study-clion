@@ -1,16 +1,10 @@
 cmake_minimum_required(VERSION 3.23)
 
-get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-string(REPLACE " " "_" ProjectId ${ProjectId})
-project(${ProjectId} C)
+cmake_minimum_required(VERSION 3.23)
+project(cmake_c_base C)
 
 set(CMAKE_C_STANDARD 99)
 
-# 递归查找当前目录及子目录下的所有 .c 文件
-file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
-
-# 生成可执行文件
-foreach(file ${SRC_FILES})
-    get_filename_component(name ${file} NAME)
-    add_executable(${name} ${file} src/for_int_plusplus.c)
-endforeach()
+add_executable(cmake_c_base src/main.c)
+add_executable(lab04 src/lab04/lab04.c)
+add_executable(lab05 src/lab05/lab05.c)
