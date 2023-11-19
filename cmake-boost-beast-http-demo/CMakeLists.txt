@@ -12,7 +12,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 add_executable(cmake_boost_beast_http_demo main.cpp)
 
-add_executable(boost_version boost_version.cpp)
+add_executable(boost_version boost_version.cpp
+        http_default_handler.h)
 target_link_libraries(boost_version ${Boost_LIBRARIES})
 
 add_executable(http_server http_server.cpp)
