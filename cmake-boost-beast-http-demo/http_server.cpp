@@ -1,6 +1,9 @@
 ﻿#include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio.hpp>
 #include <chrono>
 #include <cstdlib>
@@ -8,13 +11,24 @@
 #include <iostream>
 #include <memory>
 #include <string>
-//#include <jsoncpp/json/json.h>
-//#include <jsoncpp/json/value.h>
-//#include <jsoncpp/json/reader.h>
 
+#ifdef _WIN32
+// Windows系统
+
+#elif defined(__APPLE__)
+// macOS系统
 #include <json/json.h>
 #include <json/value.h>
 #include <json/reader.h>
+
+#elif defined(__linux__)
+// Linux系统
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
+#include <jsoncpp/json/reader.h>
+
+#endif
+
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -33,6 +47,7 @@ namespace my_program_state {
     return std::time(0);
   }
 }
+
 
 class http_connection : public std::enable_shared_from_this<http_connection> {
 public:
@@ -67,20 +82,27 @@ private:
   void read_request() {
     const std::shared_ptr<http_connection> &self = shared_from_this();
 
-    http::async_read(
-      socket_,
-      buffer_,
-      request_,
-      [self](beast::error_code ec,
-             std::size_t bytes_transferred) {
-        boost::ignore_unused(bytes_transferred);
-        if (!ec)
-          self->process_request();
-      });
+    auto handler = [self](beast::error_code ec, std::size_t bytes_transferred) {
+      boost::ignore_unused(bytes_transferred);
+      if (!ec) {
+        self->process_request();
+      }
+
+    };
+    http::async_read(socket_, buffer_, request_, handler);
   }
 
   // Determine what needs to be done with the request message.
   void process_request() {
+    if (request_.target() == "/ws/ws1") {
+      // 升级到WebSocket
+      if (boost::beast::websocket::is_upgrade(request_)) {
+        // 创建一个新的WebSocket会话
+        std::make_shared<websocket_session>(std::move(socket_))->run(std::move(request_));
+        return; // WebSocket会话接管了socket
+      }
+    }
+
     response_.version(request_.version());
     response_.keep_alive(false);
 
@@ -182,32 +204,34 @@ private:
 
     response_.content_length(response_.body().size());
 
+    auto handler = [self](beast::error_code ec, std::size_t) {
+      self->socket_.shutdown(tcp::socket::shutdown_send, ec);
+      self->deadline_.cancel();
+    };
     http::async_write(
       socket_,
       response_,
-      [self](beast::error_code ec, std::size_t) {
-        self->socket_.shutdown(tcp::socket::shutdown_send, ec);
-        self->deadline_.cancel();
-      });
+      handler);
   }
 
   // Check whether we have spent enough time on this connection.
   void check_deadline() {
     const std::shared_ptr<http_connection> &self = shared_from_this();
 
-    deadline_.async_wait(
-      [self](beast::error_code ec) {
-        if (!ec) {
-          // Close socket to cancel any outstanding operation.
-          self->socket_.close(ec);
-        }
-      });
+    auto handler = [self](beast::error_code ec) {
+      if (!ec) {
+        // Close socket to cancel any outstanding operation.
+        self->socket_.close(ec);
+      }
+    };
+
+    deadline_.async_wait(handler);
   }
 };
 
 // "Loop" forever accepting new connections.
 void http_server(tcp::acceptor &acceptor, tcp::socket &socket) {
-// 定义回调函数
+  // 定义回调函数
   auto accept_handler = [&acceptor, &socket](beast::error_code ec) {
     if (!ec) {
       std::make_shared<http_connection>(std::move(socket))->start();
@@ -229,7 +253,6 @@ int main(int argc, char *argv[]) {
     tcp::acceptor acceptor{ioc, {address, port}};
     tcp::socket socket{ioc};
     http_server(acceptor, socket);
-
     ioc.run();
   }
   catch (std::exception const &e) {
