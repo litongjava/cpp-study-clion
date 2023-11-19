@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ConnectionMgr.h"
+#include "ConnectionManager.h"
 
 class WebSocketServer {
 public:

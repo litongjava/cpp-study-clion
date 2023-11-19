@@ -1,5 +1,5 @@
 #include "Connection.h"
-#include "ConnectionMgr.h"
+#include "ConnectionManager.h"
 
 Connection::Connection(boost::asio::io_context &ioc)
   : _ioc(ioc),
@@ -26,7 +26,7 @@ void Connection::AsyncAccept() {
   auto handler = [self](boost::system::error_code err) {
     try {
       if (!err) {
-        ConnectionMgr::GetInstance().AddConnection(self);
+        ConnectionManager::GetInstance().AddConnection(self);
         self->Start();
       } else {
         const std::string &string = err.message();
@@ -34,7 +34,7 @@ void Connection::AsyncAccept() {
       }
     }
     catch (std::exception &exp) {
-      std::cout << "websocket async accept exception is " << exp.what();
+      std::cout << "websocket async accept exception is " << exp.what() << std::endl;
     }
   };
   _ws_ptr->async_accept(handler);
@@ -47,7 +47,7 @@ void Connection::Start() {
       if (err) {
         const std::string &message = err.message();
         std::cout << "websocket async read error is " << &message << std::endl;
-        ConnectionMgr::GetInstance().RmvConnection(self->GetUid());
+        ConnectionManager::GetInstance().RmvConnection(self->GetUid());
         return;
       }
       self->_ws_ptr->text(self->_ws_ptr->got_text());
@@ -59,7 +59,7 @@ void Connection::Start() {
     }
     catch (std::exception &exp) {
       std::cout << "exception is " << exp.what() << std::endl;
-      ConnectionMgr::GetInstance().RmvConnection(self->GetUid());
+      ConnectionManager::GetInstance().RmvConnection(self->GetUid());
     }
   };
   _ws_ptr->async_read(_recv_buffer, handler);
@@ -67,7 +67,7 @@ void Connection::Start() {
 
 void Connection::AsyncSend(std::string msg) {
   {
-    std::lock_guard<std::mutex> lck_gurad(_send_mtx);
+    std::lock_guard<std::mutex> lck_guard(_send_mtx);
     int que_len = _send_que.size();
     _send_que.push(msg);
     if (que_len > 0) {
@@ -86,13 +86,13 @@ void Connection::SendCallBack(std::string msg) {
       if (err) {
         const std::string &message = err.message();
         std::cout << "async send err is " << &message << std::endl;
-        ConnectionMgr::GetInstance().RmvConnection(self->_uuid);
+        ConnectionManager::GetInstance().RmvConnection(self->_uuid);
         return;
       }
 
       std::string send_msg;
       {
-        std::lock_guard<std::mutex> lck_gurad(self->_send_mtx);
+        std::lock_guard<std::mutex> lck_guard(self->_send_mtx);
         self->_send_que.pop();
         if (self->_send_que.empty()) {
           return;
@@ -105,7 +105,7 @@ void Connection::SendCallBack(std::string msg) {
     }
     catch (std::exception &exp) {
       std::cout << "async send exception is " << exp.what() << std::endl;
-      ConnectionMgr::GetInstance().RmvConnection(self->_uuid);
+      ConnectionManager::GetInstance().RmvConnection(self->_uuid);
     }
   };
   const boost::asio::const_buffers_1 &buffers1 = boost::asio::buffer(msg.c_str(), msg.length());

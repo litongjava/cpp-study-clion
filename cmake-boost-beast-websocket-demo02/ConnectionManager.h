@@ -3,20 +3,20 @@
 #include "Connection.h"
 #include "boost/unordered_map.hpp"
 
-class ConnectionMgr {
+class ConnectionManager {
 public:
-  static ConnectionMgr &GetInstance();
+  static ConnectionManager &GetInstance();
 
   void AddConnection(std::shared_ptr<Connection> conptr);
 
   void RmvConnection(std::string);
 
 private:
-  ConnectionMgr(const ConnectionMgr &) = delete;
+  ConnectionManager(const ConnectionManager &) = delete;
 
-  ConnectionMgr &operator=(const ConnectionMgr &) = delete;
+  ConnectionManager &operator=(const ConnectionManager &) = delete;
 
-  ConnectionMgr();
+  ConnectionManager();
 
   boost::unordered_map<std::string, std::shared_ptr<Connection>> _map_cons;
 };
