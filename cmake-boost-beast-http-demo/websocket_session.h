@@ -23,7 +23,7 @@ public:
   explicit websocket_session(tcp::socket socket)
     : ws_(std::move(socket)) {}
 
-  void run(http::request <http::dynamic_body> req) {
+  void run(http::request<http::dynamic_body> req) {
     // 接受WebSocket握手
     auto handler = [self = shared_from_this()](beast::error_code ec) {
       if (!ec) {
@@ -34,7 +34,7 @@ public:
   }
 
 private:
-  beast::websocket::stream <beast::tcp_stream> ws_;
+  beast::websocket::stream<beast::tcp_stream> ws_;
 
   void read_message() {
     // 读取WebSocket消息

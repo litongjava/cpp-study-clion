@@ -1,4 +1,6 @@
-﻿#include <boost/beast/core.hpp>
+﻿#include "websocket_session.h"
+
+#include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/version.hpp>
@@ -11,23 +13,12 @@
 #include <iostream>
 #include <memory>
 #include <string>
-
-#ifdef _WIN32
-// Windows系统
-
-#elif defined(__APPLE__)
-// macOS系统
 #include <json/json.h>
 #include <json/value.h>
 #include <json/reader.h>
 
-#elif defined(__linux__)
-// Linux系统
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
 
-#endif
+
 
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -49,9 +40,9 @@ namespace my_program_state {
 }
 
 
-class http_connection : public std::enable_shared_from_this<http_connection> {
+class http_default_handler : public std::enable_shared_from_this<http_default_handler> {
 public:
-  http_connection(tcp::socket socket)
+  http_default_handler(tcp::socket socket)
     : socket_(std::move(socket)) {
   }
 
@@ -80,7 +71,7 @@ private:
 
   // Asynchronously receive a complete request message.
   void read_request() {
-    const std::shared_ptr<http_connection> &self = shared_from_this();
+    const std::shared_ptr<http_default_handler> &self = shared_from_this();
 
     auto handler = [self](beast::error_code ec, std::size_t bytes_transferred) {
       boost::ignore_unused(bytes_transferred);
@@ -200,7 +191,7 @@ private:
 
   // Asynchronously transmit the response message.
   void write_response() {
-    const std::shared_ptr<http_connection> &self = shared_from_this();
+    const std::shared_ptr<http_default_handler> &self = shared_from_this();
 
     response_.content_length(response_.body().size());
 
@@ -216,7 +207,7 @@ private:
 
   // Check whether we have spent enough time on this connection.
   void check_deadline() {
-    const std::shared_ptr<http_connection> &self = shared_from_this();
+    const std::shared_ptr<http_default_handler> &self = shared_from_this();
 
     auto handler = [self](beast::error_code ec) {
       if (!ec) {
@@ -234,7 +225,7 @@ void http_server(tcp::acceptor &acceptor, tcp::socket &socket) {
   // 定义回调函数
   auto accept_handler = [&acceptor, &socket](beast::error_code ec) {
     if (!ec) {
-      std::make_shared<http_connection>(std::move(socket))->start();
+      std::make_shared<http_default_handler>(std::move(socket))->start();
     }
     http_server(acceptor, socket);
   };
@@ -245,7 +236,7 @@ void http_server(tcp::acceptor &acceptor, tcp::socket &socket) {
 
 int main(int argc, char *argv[]) {
   const boost::asio::ip::address address = net::ip::make_address("127.0.0.1");
-  ushort port = static_cast<unsigned short>(8080);
+  unsigned short port = static_cast<unsigned short>(8080);
 
   try {
     net::io_context ioc{1};

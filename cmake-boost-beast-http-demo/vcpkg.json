@@ -1,0 +1,12 @@
+{
+  "name" : "cmake-boost-beast-http-demo",
+  "version-string" : "1.0.0",
+  "dependencies" : [ {
+    "name" : "jsoncpp",
+    "version>=" : "1.9.5#1"
+  }, {
+    "name" : "boost",
+    "version>=" : "1.83.0#1"
+  } ],
+  "builtin-baseline" : "78ba9711d30c64a6b40462c72f356c681e2255f3"
+}
