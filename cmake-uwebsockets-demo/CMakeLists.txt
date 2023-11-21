@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.25)
 project(cmake_uWebSockets_demo)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,4 +18,4 @@ add_executable(main main.cpp)
 
 # 链接 uWebSockets、zlib、libuv 和 uSockets 库
 target_include_directories(main PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
-target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv ${USOCKETS_LIBRARY})
+target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv_a ${USOCKETS_LIBRARY})
