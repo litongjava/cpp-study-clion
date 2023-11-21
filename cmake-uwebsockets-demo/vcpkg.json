@@ -1,0 +1,11 @@
+{
+  "name": "cmake-uwebsockets-demo",
+  "version-string": "1.0.0",
+  "builtin-baseline": "0c20b2a97c390e106150837042d921b0939e7ecb",
+  "dependencies": [
+    {
+      "name": "uwebsockets",
+      "version>=": "20.47.0"
+    }
+  ]
+}
