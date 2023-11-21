@@ -18,4 +18,15 @@ add_executable(main main.cpp)
 
 # 链接 uWebSockets、zlib、libuv 和 uSockets 库
 target_include_directories(main PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
-target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv_a ${USOCKETS_LIBRARY})
+# 检测操作系统
+if(WIN32)
+    # 如果是 Windows
+    target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv ${USOCKETS_LIBRARY})
+elseif(APPLE)
+    # 如果是 MacOS
+    target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv_a ${USOCKETS_LIBRARY})
+else()
+    # 对于其他系统，比如 Linux
+    target_link_libraries(main PRIVATE ZLIB::ZLIB libuv::uv ${USOCKETS_LIBRARY})
+endif()
+
