@@ -1,0 +1,12 @@
+{
+  "name": "cmake-libmpg123-learn",
+  "version-string": "1.0.0",
+  "builtin-baseline": "23ceb9cbf9b6d32f485cf039547b70102a6ef9d8",
+  "dependencies": [
+    {
+      "name": "mpg123",
+      "version>=": "1.31.3#3",
+      "$comment": "  # this is heuristically generated, and may not be correct\n\n  find_package(mpg123 CONFIG REQUIRED)\n\n  target_link_libraries(main PRIVATE MPG123::libmpg123 MPG123::libout123 MPG123::libsyn123)\n"
+    }
+  ]
+}

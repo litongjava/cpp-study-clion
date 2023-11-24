@@ -9,11 +9,12 @@ extern "C" {
 #include "simplevad/period_format.h"
 #include "simplevad/file_cut.h"
 }
+
 int run(FILE *fp, simple_vad *vad, struct cut_info *cut);
 
 int add_period_activity(struct periods *per, int is_active, int is_last);
 
-int main(int argc,char** argv) {
+int main(int argc, char **argv) {
 //default cmake-build-debug/main
   const char filename[] = "../pcm/16k_1.pcm";
   const char output_dir[] = "output_pcm";
@@ -89,4 +90,5 @@ int add_period_activity(struct periods *per, int is_active, int is_last) {
     //periods_print(per);
     std::cout << "total frames " << count << "\n";
   }
+  return 0;
 }
