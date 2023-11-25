@@ -43,14 +43,16 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
     return false;
   }
 
-  SwrContext *swrCtx = swr_alloc_set_opts(nullptr,
-                                          stereo ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO,
-                                          AV_SAMPLE_FMT_FLT,
-                                          COMMON_SAMPLE_RATE,
-                                          codecContext->channel_layout,
-                                          codecContext->sample_fmt,
-                                          codecContext->sample_rate,
-                                          0, nullptr);
+  //bool need_resample = (codecContext->sample_rate != COMMON_SAMPLE_RATE);
+  SwrContext *swrCtx = nullptr;
+  swrCtx = swr_alloc_set_opts(nullptr,
+                              stereo ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO,
+                              AV_SAMPLE_FMT_FLT,
+                              COMMON_SAMPLE_RATE,
+                              codecContext->channel_layout,
+                              codecContext->sample_fmt,
+                              codecContext->sample_rate,
+                              0, nullptr);
   if (!swrCtx || swr_init(swrCtx) < 0) {
     fprintf(stderr, "Could not initialize the resampling context\n");
     swr_free(&swrCtx);
@@ -58,6 +60,7 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
     avformat_close_input(&formatContext);
     return false;
   }
+
 
   AVPacket packet;
   av_init_packet(&packet);
@@ -83,8 +86,7 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
           break;
         }
 
-
-        // Resample frames and convert them to float PCM format
+        // Direct processing of decoded frames
         uint8_t *out_buf[2] = {nullptr};
         int out_samples = av_rescale_rnd(swr_get_delay(swrCtx, codecContext->sample_rate) + frame->nb_samples,
                                          COMMON_SAMPLE_RATE, codecContext->sample_rate, AV_ROUND_UP);
@@ -121,7 +123,7 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
 }
 
 int main(int argc, char **argv) {
-  std::string m4a_file_path = "../samples/A1_APartyInvitation__lesson_1368784253.m4a";  // 替换为您的 WAV 文件路径
+  std::string m4a_file_path = "../samples/jfk.m4a";  // 替换为您的 WAV 文件路径
   // audio arrays
   std::vector<float> pcmf32;               // mono-channel F32 PCM
   std::vector<std::vector<float>> pcmf32s; // stereo-channel F32 PCM
@@ -129,6 +131,5 @@ int main(int argc, char **argv) {
 
   printf("size of samples %d\n", pcmf32.size());
 
-  return 0;
   return 0;
 }
