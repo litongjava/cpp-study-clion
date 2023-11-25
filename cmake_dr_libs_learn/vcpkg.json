@@ -1,0 +1,16 @@
+{
+  "name": "cmake-dir-libs-dir-wav-learn",
+  "version-string": "1.0.0",
+  "builtin-baseline": "23ceb9cbf9b6d32f485cf039547b70102a6ef9d8",
+  "dependencies": [
+    {
+      "name": "libsamplerate",
+      "version>=": "0.2.2#1",
+      "$comment": "  # this is heuristically generated, and may not be correct\n\n  find_package(SampleRate CONFIG REQUIRED)\n\n  target_link_libraries(main PRIVATE SampleRate::samplerate)\n"
+    },
+    {
+      "name": "ffmpeg",
+      "version>=": "6.1"
+    }
+  ]
+}
