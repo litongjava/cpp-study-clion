@@ -71,6 +71,7 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
 
   while (av_read_frame(formatContext, &packet) >= 0) {
     if (packet.stream_index == streamIndex) {
+      //decode
       int ret = avcodec_send_packet(codecContext, &packet);
       if (ret < 0) {
         fprintf(stderr, "Error sending packet for decoding\n");
@@ -87,16 +88,17 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
         }
 
         // Direct processing of decoded frames
-        uint8_t *out_buf[2] = {nullptr};
+        uint8_t *out_buf[2] = {nullptr, nullptr};
+        int out_channels = stereo ? 2 : 1;
         int out_samples = av_rescale_rnd(swr_get_delay(swrCtx, codecContext->sample_rate) + frame->nb_samples,
                                          COMMON_SAMPLE_RATE, codecContext->sample_rate, AV_ROUND_UP);
-        av_samples_alloc(out_buf, nullptr, 2, out_samples, AV_SAMPLE_FMT_FLT, 0);
+        av_samples_alloc(out_buf, nullptr, out_channels, out_samples, AV_SAMPLE_FMT_FLT, 0);
         swr_convert(swrCtx, out_buf, out_samples, (const uint8_t **) frame->data, frame->nb_samples);
 
-        int data_size = av_samples_get_buffer_size(nullptr, 2, out_samples, AV_SAMPLE_FMT_FLT, 0);
+        int data_size = av_samples_get_buffer_size(nullptr, out_channels, out_samples, AV_SAMPLE_FMT_FLT, 0);
         for (int i = 0; i < data_size / sizeof(float); ++i) {
           pcmf32.push_back(((float *) out_buf[0])[i]);
-          if (stereo) {
+          if (stereo && out_buf[1] != nullptr) {
             pcmf32s[0].push_back(((float *) out_buf[0])[i]);
             pcmf32s[1].push_back(((float *) out_buf[1])[i]);
           }
@@ -105,9 +107,13 @@ bool read_m4a(const std::string &fname, std::vector<float> &pcmf32, std::vector<
         if (out_buf[0]) {
           av_freep(&out_buf[0]);
         }
+        if (stereo && out_buf[1]) {
+          av_freep(&out_buf[1]);
+        }
 
         av_frame_unref(frame);
       }
+      av_packet_unref(&packet);
     }
     av_packet_unref(&packet);
   }
