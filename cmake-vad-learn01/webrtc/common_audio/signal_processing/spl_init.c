@@ -29,6 +29,7 @@ DownsampleFast WebRtcSpl_DownsampleFast;
 ScaleAndAddVectorsWithRound WebRtcSpl_ScaleAndAddVectorsWithRound;
 
 #if (!defined(WEBRTC_HAS_NEON)) && !defined(MIPS32_LE)
+
 /* Initialize function pointers to the generic C version. */
 static void InitPointersToC() {
   WebRtcSpl_MaxAbsValueW16 = WebRtcSpl_MaxAbsValueW16C;
@@ -40,8 +41,9 @@ static void InitPointersToC() {
   WebRtcSpl_CrossCorrelation = WebRtcSpl_CrossCorrelationC;
   WebRtcSpl_DownsampleFast = WebRtcSpl_DownsampleFastC;
   WebRtcSpl_ScaleAndAddVectorsWithRound =
-      WebRtcSpl_ScaleAndAddVectorsWithRoundC;
+    WebRtcSpl_ScaleAndAddVectorsWithRoundC;
 }
+
 #endif
 
 #if defined(WEBRTC_HAS_NEON)
@@ -92,15 +94,8 @@ static void InitFunctionPointers(void) {
 #endif  /* WEBRTC_HAS_NEON */
 }
 
-#if defined(WEBRTC_POSIX)
-#include <pthread.h>
+#if defined(_WIN32) || defined(_WIN64)
 
-static void once(void (*func)(void)) {
-  static pthread_once_t lock = PTHREAD_ONCE_INIT;
-  pthread_once(&lock, func);
-}
-
-#elif defined(_WIN32)
 #include <windows.h>
 
 static void once(void (*func)(void)) {
@@ -111,7 +106,7 @@ static void once(void (*func)(void)) {
    * InterlockedCompareExchangePointer) to avoid issues similar to
    * http://code.google.com/p/webm/issues/detail?id=467.
    */
-  static CRITICAL_SECTION lock = {(void *)((size_t)-1), -1, 0, 0, 0, 0};
+  static CRITICAL_SECTION lock = {(void *) ((size_t) -1), -1, 0, 0, 0, 0};
   static int done = 0;
 
   EnterCriticalSection(&lock);
@@ -122,11 +117,20 @@ static void once(void (*func)(void)) {
   LeaveCriticalSection(&lock);
 }
 
+#else
+// POSIX 兼容系统特定代码
+#include <pthread.h>
+
+static void once(void (*func)(void)) {
+  static pthread_once_t lock = PTHREAD_ONCE_INIT;
+  pthread_once(&lock, func);
+}
+
 /* There's no fallback version as an #else block here to ensure thread safety.
  * In case of neither pthread for WEBRTC_POSIX nor _WIN32 is present, build
  * system should pick it up.
  */
-#endif  /* WEBRTC_POSIX */
+#endif  /* _WIN32 */
 
 void WebRtcSpl_Init() {
   once(InitFunctionPointers);

@@ -9,17 +9,18 @@
 #include "simple_vad.h"
 
 struct periods {
-    int is_pervious_active;
-    size_t current_frame;
-    uint64_t *period_start;
-    uint64_t *period_end;
-    int size;
-    size_t size_allocated;
-    int is_end_filled;
+  int is_pervious_active;
+  size_t current_frame;
+  uint64_t *period_start;
+  uint64_t *period_end;
+  int size;
+  size_t size_allocated;
+  int is_end_filled;
 
 };
 
 struct periods *periods_create();
+
 /**
  * @brief
  * @param per

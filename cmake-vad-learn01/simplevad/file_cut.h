@@ -10,15 +10,15 @@
 #include "stdint.h"
 
 struct cut_info {
-    int is_pervious_active;
-    int is_contain_active;
-    int previous_along_frames;
-    FILE *fp;
-    int current_frame;
-    int cut_begin_frame;
-    char result_filename[200];
-    char output_file_dir[100];
-    char output_filename_prefix[100];
+  int is_pervious_active;
+  int is_contain_active;
+  int previous_along_frames;
+  FILE *fp;
+  int current_frame;
+  int cut_begin_frame;
+  char result_filename[200];
+  char output_file_dir[100];
+  char output_filename_prefix[100];
 
 };
 

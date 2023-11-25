@@ -33,7 +33,7 @@ int main(int argc, char **arvc) {
   file.read(reinterpret_cast<char *>(pcm16.data()), fileSize);
 
   if (!file) {
-    std::cerr << "读取文件时出错" << std::endl;
+    printf("读取文件时出错\n");
     return 2;
   }
 
@@ -52,6 +52,7 @@ int main(int argc, char **arvc) {
   }
 
   struct periods *per = periods_create();
+  size_t start_index = 0;  // 新增变量，记录段落开始的索引
 
   int res = 0;
   while (res == 0) {
@@ -69,8 +70,13 @@ int main(int argc, char **arvc) {
       temp[count++] = pcm16[pcmIndex++];
     }
     int is_active = process_vad(vad.get(), temp);
-    add_period_activity(per, is_active, is_last);
+    int result = add_period_activity(per, is_active, is_last);
     printf("pcmIndex %d,is_active %d,is_last %d\n", pcmIndex, is_active, is_last);
+    // 当活动状态改变时，输出当前段落的开始和结束索引
+    if (result != 0) {
+      std::cout << "Segment: Start Index = " << start_index << ", End Index = " << (pcmIndex - 1) << std::endl;
+      start_index = pcmIndex;  // 更新下一个段落的开始索引
+    }
   }
 
   periods_free(per);
@@ -86,6 +92,7 @@ int add_period_activity(struct periods *per, int is_active, int is_last) {
   }
   if (is_active != old_is_active) {
     old_is_active = is_active;
+    return count;  // 返回非零值表示状态改变
   }
   count += 1;
   if (is_last) {
