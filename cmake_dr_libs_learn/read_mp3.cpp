@@ -10,6 +10,7 @@
 
 #include <samplerate.h>
 
+//resample(pSampleData, mp3.sampleRate, frameCount * mp3.channels, resampledData, COMMON_SAMPLE_RATE))
 bool resample(const float *input, size_t inputSampleRate, size_t inputSize,
               std::vector<float> &output, size_t outputSampleRate) {
   // Initialize Converter
@@ -58,38 +59,56 @@ bool read_mp3(const std::string &fname, std::vector<float> &pcmf32, bool stereo)
     fprintf(stderr, "%s: MP3 file '%s' must be mono or stereo\n", __func__, fname.c_str());
     return false;
   }
-
   if (stereo && mp3.channels != 2) {
     fprintf(stderr, "%s: MP3 file '%s' must be stereo for this operation\n", __func__, fname.c_str());
     return false;
   }
 
+
   drmp3_uint64 frameCount;
   float *pSampleData = drmp3__full_read_and_close_f32(&mp3, nullptr, &frameCount);
+  bool isAllocated = false;
+  fprintf(stdout, "mp3.channels %d,mp3.sampleRate %d, frameCount:%d\n", mp3.channels, mp3.sampleRate, frameCount);
 
-
-  if (mp3.sampleRate != COMMON_SAMPLE_RATE) {
-    std::vector<float> resampledData;
-    if (!resample(pSampleData, mp3.sampleRate, frameCount * mp3.channels, resampledData, COMMON_SAMPLE_RATE)) {
-      fprintf(stderr, "error: failed to resample MP3 data\n");
-      drmp3_free(pSampleData, nullptr);
-      return false;
+  if (!stereo && mp3.channels == 2) {
+    std::vector<float> monoData;
+    monoData.reserve(frameCount);
+    for (drmp3_uint64 i = 0; i < frameCount * 2; i += 2) {
+      monoData.push_back((pSampleData[i] + pSampleData[i + 1]) / 2);
     }
+    drmp3_free(pSampleData, nullptr); // Releasing raw data
 
-    pcmf32.swap(resampledData); // 使用转换后的数据
-
-  } else {
-    pcmf32.assign(pSampleData, pSampleData + frameCount * mp3.channels);
+    pSampleData = new float[monoData.size()]; // reallocate memory
+    std::copy(monoData.begin(), monoData.end(), pSampleData); // copy data
+    isAllocated = true;
+    frameCount = monoData.size();
+    mp3.channels = 1;  // Update the number of channels
   }
 
-  drmp3_free(pSampleData, nullptr);
-
+  printf("mp3.channels %d,mp3.sampleRate %d, frameCount:%d\n", mp3.channels, mp3.sampleRate, frameCount);
+  if (mp3.sampleRate != COMMON_SAMPLE_RATE) {
+    std::vector<float> resampledData;
+    if (!resample(pSampleData, mp3.sampleRate, frameCount, resampledData, COMMON_SAMPLE_RATE)) {
+      fprintf(stderr, "error: failed to resample MP3 data\n");
+      delete[] pSampleData; // Releasing reallocated memory
+      return false;
+    }
+    pcmf32.swap(resampledData); // Use of transformed data
+  } else {
+    pcmf32.assign(pSampleData, pSampleData + frameCount);
+  }
+  //release
+  if (isAllocated) {
+    delete[] pSampleData; // If memory is reallocated, use the delete[]
+  } else {
+    drmp3_free(pSampleData, nullptr); // otherwise, use the drmp3_free
+  }
   return true;
 }
 
 int main() {
   std::cout << "Hello, World!" << std::endl;
-  std::string mp3_file_path = "../samples/jfk.mp3"; // 替换为您的 MP3 文件路径
+  std::string mp3_file_path = "G:\\audio\\ESOL94Nov21Part1.mp3"; // 替换为您的 MP3 文件路径
   std::vector<float> pcmf32; // mono-channel F32 PCM
 
   if (!read_mp3(mp3_file_path, pcmf32, false)) {
@@ -98,5 +117,6 @@ int main() {
   }
 
   printf("size of samples: %zu\n", pcmf32.size());
+  // ESOL94Nov21Part1.mp3 00:20:44, (20*60+44)*16000=19904000
   return 0;
 }
